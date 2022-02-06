@@ -1,0 +1,33 @@
+#include "stm32l1xx.h"
+
+uint16_t adc_data = 0;
+uint16_t map_data = 0;
+long map(long,long,long,long,long);
+int main()
+{
+	RCC->AHBENR |= (1<<0);
+	GPIOA->MODER |= (3<<10);
+	RCC->CR |= (1<<0);
+	while(((RCC->CR & 0x02)>>1)==1);
+	RCC->APB2ENR |= (1<<9);
+	
+	ADC1->CR1 |= (1<<24)| (1<<11);
+	ADC1->CR1 &= ~(7<<13);
+	ADC1->CR2 &= ~(1<<11);
+	ADC1->SMPR3 |= (2<<15);
+	ADC1->SQR5 |= (5<<0);
+	ADC1->CR2 |= (1<<0);
+	
+	while(1)
+	{
+		ADC1->CR2 |= (1<<30);
+		while((ADC1->SR & (1<<1)) == 0);
+		adc_data = ADC1->DR;
+		map_data = map(adc_data,1023,0,0,100);
+	}
+	return 0 ;
+}
+
+long map(long x, long in_min, long in_max, long out_min, long out_max) {
+ return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
